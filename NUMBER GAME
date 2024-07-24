@@ -1,105 +1,98 @@
-import java.util.InputMismatchException;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Random;
-import java.util.*;
 
-public class GuessTheNumber {
-    static final int LOWER_LIMIT = 1;
-    static final int UPPER_LIMIT = 100;
-    static final int ATTEMPTS_LIMIT = 10;
+public class NumberGame extends JFrame {
+    private JTextField guessField;
+    private JButton guessButton;
+    private JLabel resultLabel;
+    private int target;
+    private int attempts;
+    private int maxAttempts;
+
+    public NumberGame(int min, int max, int maxAttempts) {
+        this.target = new Random().nextInt(max - min + 1) + min;
+        this.maxAttempts = maxAttempts;
+        this.attempts = 0;
+
+        setTitle("Number Guessing Game");
+        setSize(600, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new FlowLayout());
+
+        JLabel instructionLabel = new JLabel("Guess a number between " + min + " and " + max + ":");
+        add(instructionLabel);
+
+        guessField = new JTextField(10);
+        add(guessField);
+
+        guessButton = new JButton("Guess");
+        guessButton.addActionListener(new GuessButtonListener());
+        add(guessButton);
+
+        resultLabel = new JLabel("");
+        add(resultLabel);
+    }
+
+    private class GuessButtonListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            try {
+                int guess = Integer.parseInt(guessField.getText());
+                attempts++;
+                if (guess < target) {
+                    resultLabel.setText("Too low! Attempts: " + attempts);
+                } else if (guess > target) {
+                    resultLabel.setText("Too high! Attempts: " + attempts);
+                } else {
+                    resultLabel.setText("Correct! Guessed in " + attempts + " attempts.");
+                    showResult("You won! The number was " + target + ". Guessed in " + attempts + " attempts.");
+                }
+                if (attempts >= maxAttempts && guess != target) {
+                    showResult("Out of attempts. The number was " + target);
+                }
+            } catch (NumberFormatException ex) {
+                resultLabel.setText("Invalid input. Enter a number.");
+            }
+        }
+    }
+
+    private void showResult(String message) {
+        JFrame resultFrame = new JFrame("Result");
+        resultFrame.setSize(600, 200);
+        resultFrame.setLayout(new FlowLayout());
+        resultFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        JLabel resultMessage = new JLabel(message);
+        resultFrame.add(resultMessage);
+
+        resultFrame.setVisible(true);
+    }
 
     public static void main(String[] args) {
-        displayHeader();
+        String[] options = {"Easy (1-20)", "Medium (1-50)", "Hard (1-100)"};
+        int[][] levels = {
+                {1, 20, 5},
+                {1, 50, 8},
+                {1, 100, 10}
+        };
 
-        Scanner sc = new Scanner(System.in);
-        Random random = new Random();
+        int level = JOptionPane.showOptionDialog(null, "Choose difficulty level:",
+                "Difficulty Level", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
+                null, options, options[0]);
 
-        int roundsPlayed = 0;
-        int totalMarks = 0;
+        if (level >= 0) {
+            int min = levels[level][0];
+            int max = levels[level][1];
+            int maxAttempts = levels[level][2];
 
-        boolean playAgain = true;
-
-        while (playAgain) {
-            int targetNumber = random.nextInt(UPPER_LIMIT - LOWER_LIMIT + 1) + LOWER_LIMIT;
-
-            System.out.println("\nRound " + (roundsPlayed + 1) + ": Guess the number between " + LOWER_LIMIT + " and " + UPPER_LIMIT);
-
-            countdownAnimation();
-
-            int attempts = 0;
-
-            while (attempts < ATTEMPTS_LIMIT) {
-                System.out.print("Enter your guess: ");
-
-                try {
-                    int userGuess = scanner.nextInt();
-
-                    if (userGuess < LOWER_LIMIT || userGuess > UPPER_LIMIT) {
-                        System.out.println("Please enter a guess between " + LOWER_LIMIT + " and " + UPPER_LIMIT + ".");
-                    } else {
-                        if (userGuess == targetNumber) {
-                            displayWinAnimation();
-                            int roundScore = Math.max(0, 100 - (attempts * 10));
-                            System.out.println("Congratulations! You guessed the correct number " + targetNumber + " in " + (attempts + 1) + " attempts. \nRound Score: " + roundScore);
-                            totalMarks += roundScore;
-                            break;
-                        } else if (userGuess < targetNumber) {
-                            System.out.println("Too low! Try again.");
-                        } else {
-                            System.out.println("Too high! Try again.");
-                        }
-
-                        attempts++;
-                    }
-                } catch (InputMismatchException e) {
-                    System.out.println("Please enter a valid integer.");
-                    scanner.next();
-                }
-            }
-
-            if (attempts == ATTEMPTS_LIMIT) {
-                System.out.println("\nSorry, you've reached the maximum number of attempts. The correct number was " + targetNumber + ".");
-            }
-
-            roundsPlayed++;
-
-            System.out.println("Round " + roundsPlayed + " Total Score: " + totalMarks);
-
-            System.out.print("\nDo you want to play again? (yes/no): ");
-            playAgain = scanner.next().toLowerCase().equals("yes");
+            SwingUtilities.invokeLater(() -> {
+                Task_01 game = new Task_01(min, max, maxAttempts);
+                game.setVisible(true);
+            });
+        } else {
+            System.exit(0);
         }
-
-        System.out.println("\nGame Over! Total Score: " + totalMarks);
-
-        scanner.close();
-    }
-
-    private static void displayHeader() {
-        System.out.println("");
-        System.out.println("*      Welcome to Guess the Number       *");
-        System.out.println("*    Can you guess the secret number?    *");
-        System.out.println("*    You have " + ATTEMPTS_LIMIT + " attempts per round.       *");
-        System.out.println("\n");
-    }
-
-    private static void displayWinAnimation() {
-        System.out.println("\n*");
-        System.out.println("   Congratulations!!!   ");
-        System.out.println("        You Win!        ");
-        System.out.println("    \\o/       \\o/       ");
-        System.out.println("     |         |        ");
-        System.out.println("    / \\       / \\       ");
-        System.out.println("*\n");
-    }
-
-    private static void countdownAnimation() {
-        for (int i = 3; i > 0; i--) {
-            System.out.print("\rGet ready in " + i + "...");
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        System.out.println("\rGet ready!              ");
     }
 }
